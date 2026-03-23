@@ -11,11 +11,21 @@ class Settings(BaseSettings):
     # ── App ──────────────────────────────────────────────────────────────────
     APP_NAME: str = "DevMind AI"
     DEBUG: bool = False
-    ALLOWED_ORIGINS: List[str] = [
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:5174",  # Current frontend port
-    ]
+    
+    # Frontend URL for CORS (Railway auto-fills this)
+    FRONTEND_URL: str = "http://localhost:5174"
+    
+    # CORS origins (automatically includes FRONTEND_URL)
+    @property
+    def ALLOWED_ORIGINS(self) -> List[str]:
+        origins = [
+            "http://localhost:3000",
+            "http://localhost:5173",
+            "http://localhost:5174",
+            self.FRONTEND_URL,  # Dynamically add from env
+        ]
+        # Remove duplicates
+        return list(set(origins))
 
     # ── GitHub OAuth ─────────────────────────────────────────────────────────
     GITHUB_CLIENT_ID: str = ""
