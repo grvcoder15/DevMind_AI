@@ -1,32 +1,55 @@
 """
 app/db/session.py — SQLAlchemy async engine + session factory.
 Defaults to SQLite for local dev; swap DATABASE_URL for PostgreSQL.
+
+IMPORTANT: Uses asyncpg driver for PostgreSQL (async compatible).
+DATABASE_URL must use: postgresql+asyncpg://user:pass@host:port/db
 """
 
+import logging
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 from app.core.config import settings
 
+logger = logging.getLogger(__name__)
+
+# Ensure DATABASE_URL uses async driver (asyncpg)
+database_url = settings.DATABASE_URL
+
+# Auto-fix: Replace postgresql:// or postgresql+psycopg2:// with postgresql+asyncpg://
+if database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    logger.info("🔧 Auto-converted DATABASE_URL to use asyncpg driver")
+elif database_url.startswith("postgresql+psycopg2://"):
+    database_url = database_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://", 1)
+    logger.info("🔧 Converted psycopg2 URL to asyncpg driver")
+
 # Connection arguments for better compatibility (especially IPv6 on Windows)
 connect_args = {}
-if "postgresql" in settings.DATABASE_URL:
+if "postgresql" in database_url:
     connect_args = {
-        "ssl": "prefer",  # Supabase requires SSL
+        "ssl": "prefer",  # Supabase/Railway requires SSL
         "server_settings": {
             "application_name": "devmind_ai"
         }
     }
+    logger.info(f"📦 Using PostgreSQL with asyncpg driver")
 
-engine = create_async_engine(
-    settings.DATABASE_URL,
-    echo=settings.DEBUG,
-    future=True,
-    connect_args=connect_args,
-    pool_pre_ping=True,  # Test connections before using them
-    pool_size=5,
-    max_overflow=10,
-)
+try:
+    engine = create_async_engine(
+        database_url,  # Use converted URL
+        echo=settings.DEBUG,
+        future=True,
+        connect_args=connect_args,
+        pool_pre_ping=True,  # Test connections before using them
+        pool_size=5,
+        max_overflow=10,
+    )
+    logger.info("✅ Database engine created successfully")
+except Exception as e:
+    logger.error(f"❌ Failed to create database engine: {e}")
+    raise
 
 AsyncSessionLocal = sessionmaker(
     bind=engine,

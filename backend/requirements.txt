@@ -20,7 +20,7 @@ numpy>=1.26.0  # Auto-select compatible version for your Python
 # Database
 sqlalchemy[asyncio]>=2.0.0
 aiosqlite>=0.20.0       # SQLite driver for dev
-# asyncpg>=0.29.0       # PostgreSQL driver - uncomment if needed (requires C compiler)
+asyncpg>=0.29.0         # PostgreSQL async driver (REQUIRED for Railway)
 
 # Voice (optional — both degrade gracefully if missing)
 # openai-whisper  # Uncomment if needed (requires C++ build tools on Windows)
@@ -30,6 +30,3 @@ gTTS==2.5.1
 httpx==0.27.0
 python-dotenv==1.0.1
 python-multipart==0.0.9  # for file uploads (voice)
-asyncpg
-psycopg2-binary
-sqlalchemy[asyncio]
