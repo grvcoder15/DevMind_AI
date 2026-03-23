@@ -1,0 +1,32 @@
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+pydantic>=2.7.0
+pydantic-settings>=2.2.0
+
+# LLM providers
+# For FREE local LLM: Install Ollama (see OLLAMA_SETUP.md) - NO pip install needed!
+# For cloud FREE options: HuggingFace or OpenRouter (no extra install, uses httpx)
+# Paid providers (OPTIONAL - comment out if using free options only):
+# anthropic==0.28.0
+# openai==1.30.0
+
+# Git cloning
+gitpython==3.1.43
+
+# Vector search
+faiss-cpu
+numpy>=1.26.0  # Auto-select compatible version for your Python
+
+# Database
+sqlalchemy[asyncio]>=2.0.0
+aiosqlite>=0.20.0       # SQLite driver for dev
+# asyncpg>=0.29.0       # PostgreSQL driver - uncomment if needed (requires C compiler)
+
+# Voice (optional — both degrade gracefully if missing)
+# openai-whisper  # Uncomment if needed (requires C++ build tools on Windows)
+gTTS==2.5.1
+
+# Utilities
+httpx==0.27.0
+python-dotenv==1.0.1
+python-multipart==0.0.9  # for file uploads (voice)

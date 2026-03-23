@@ -1,0 +1,23 @@
+# Quick Deploy Commands
+
+# Step 1: Initialize Git
+git init
+git add .
+git commit -m "Initial commit: DevMind AI v2.0 ready for Railway"
+
+# Step 2: Create GitHub Repository (do this on github.com first)
+# Then run:
+git remote add origin https://github.com/YOUR_USERNAME/devmind-ai.git
+git branch -M main
+git push -u origin main
+
+# Step 3: Deploy on Railway
+# 1. Go to https://railway.app
+# 2. New Project → Deploy from GitHub repo
+# 3. Create PostgreSQL database
+# 4. Create Backend service (/backend folder)
+# 5. Create Frontend service (/frontend folder)
+# 6. Set environment variables (see RAILWAY_DEPLOY.md)
+
+# Optional: Check deployment readiness
+# bash check-deployment.sh
