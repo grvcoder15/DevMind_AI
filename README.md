@@ -351,3 +351,5 @@ redis==5.0.4
 python-dotenv==1.0.1
 python-multipart==0.0.9
 ```
+#   D e v M i n d _ A I  
+ 
