@@ -30,3 +30,6 @@ gTTS==2.5.1
 httpx==0.27.0
 python-dotenv==1.0.1
 python-multipart==0.0.9  # for file uploads (voice)
+asyncpg
+psycopg2-binary
+sqlalchemy[asyncio]
