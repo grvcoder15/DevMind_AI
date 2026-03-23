@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Spinner from '../components/Spinner';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
 export default function GitHubCallbackPage() {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
@@ -26,7 +28,7 @@ export default function GitHubCallbackPage() {
 
       try {
         // Exchange code for access token
-        const response = await fetch('http://localhost:8000/github/oauth/callback', {
+        const response = await fetch(`${API_BASE}/github/oauth/callback`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code })

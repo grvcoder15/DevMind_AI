@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import Spinner from "./Spinner";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 
 export default function GitHubRepoSelector({ isOpen, onClose, onSelectRepo }) {
   const [repos, setRepos] = useState([]);

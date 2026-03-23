@@ -8,7 +8,7 @@ import Spinner from "../components/Spinner";
 import GitHubRepoSelector from "../components/GitHubRepoSelector";
 import { MOCK_ANALYSIS, EXAMPLE_REPOS } from "../utils/mockData";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 
 const PIPELINE_STEPS = [
   "Cloning repository...",

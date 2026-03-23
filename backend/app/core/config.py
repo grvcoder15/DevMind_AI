@@ -30,7 +30,20 @@ class Settings(BaseSettings):
     # ── GitHub OAuth ─────────────────────────────────────────────────────────
     GITHUB_CLIENT_ID: str = ""
     GITHUB_CLIENT_SECRET: str = ""
-    GITHUB_REDIRECT_URI: str = "http://localhost:5174/auth/callback"
+    GITHUB_REDIRECT_URI_OVERRIDE: str = ""  # Optional: explicit redirect URI for Railway
+    
+    @property
+    def GITHUB_REDIRECT_URI(self) -> str:
+        """
+        GitHub OAuth redirect URI.
+        Priority: GITHUB_REDIRECT_URI_OVERRIDE env var > auto-construct from FRONTEND_URL
+        
+        For Railway deployment, set: GITHUB_REDIRECT_URI_OVERRIDE=${{Frontend.RAILWAY_PUBLIC_URL}}/auth/callback
+        For local dev: Auto-constructs to http://localhost:5174/auth/callback
+        """
+        if self.GITHUB_REDIRECT_URI_OVERRIDE:
+            return self.GITHUB_REDIRECT_URI_OVERRIDE
+        return f"{self.FRONTEND_URL}/auth/callback"
 
     # ── LLM ──────────────────────────────────────────────────────────────────
     # Provider: "gemini" (FREE) | "ollama" (FREE/Local) | "huggingface" (FREE) | "openrouter" (FREE) | "anthropic" | "openai"
