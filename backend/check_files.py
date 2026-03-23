@@ -1,11 +1,25 @@
 import asyncio
+import os
+from dotenv import load_dotenv
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from app.models.models import RepositoryFile
 
+# Load environment variables from .env file
+load_dotenv()
+
 async def main():
-    engine = create_async_engine('postgresql+asyncpg://postgres:Welcome%40123@localhost:5432/Devmind_ai')
+    # Get database URL from environment variable
+    # Defaults to local if not set
+    db_url = os.getenv(
+        'DATABASE_URL',
+        'postgresql+asyncpg://postgres:Welcome%40123@localhost:5432/Devmind_ai'
+    )
+    
+    print(f"🔗 Connecting to: {db_url.split('@')[0]}@***")  # Hide password in output
+    
+    engine = create_async_engine(db_url)
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     
     async with async_session() as session:
