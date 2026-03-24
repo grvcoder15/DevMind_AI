@@ -2,8 +2,8 @@
 app/db/session.py — SQLAlchemy async engine + session factory.
 Defaults to SQLite for local dev; swap DATABASE_URL for PostgreSQL.
 
-IMPORTANT: Uses asyncpg driver for PostgreSQL (async compatible).
-DATABASE_URL must use: postgresql+asyncpg://user:pass@host:port/db
+IMPORTANT: Uses psycopg (psycopg3) driver for PostgreSQL (async compatible).
+DATABASE_URL must use: postgresql+psycopg://user:pass@host:port/db
 """
 
 import logging
@@ -14,27 +14,27 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Ensure DATABASE_URL uses async driver (asyncpg)
+# Ensure DATABASE_URL uses async driver (psycopg3)
 database_url = settings.DATABASE_URL
 
-# Auto-fix: Replace postgresql:// or postgresql+psycopg2:// with postgresql+asyncpg://
+# Auto-fix: Replace postgresql://, postgresql+psycopg2://, or postgresql+asyncpg:// with postgresql+psycopg://
 if database_url.startswith("postgresql://"):
-    database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-    logger.info("🔧 Auto-converted DATABASE_URL to use asyncpg driver")
+    database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    logger.info("🔧 Auto-converted DATABASE_URL to use psycopg driver")
 elif database_url.startswith("postgresql+psycopg2://"):
-    database_url = database_url.replace("postgresql+psycopg2://", "postgresql+asyncpg://", 1)
-    logger.info("🔧 Converted psycopg2 URL to asyncpg driver")
+    database_url = database_url.replace("postgresql+psycopg2://", "postgresql+psycopg://", 1)
+    logger.info("🔧 Converted psycopg2 URL to psycopg driver")
+elif database_url.startswith("postgresql+asyncpg://"):
+    database_url = database_url.replace("postgresql+asyncpg://", "postgresql+psycopg://", 1)
+    logger.info("🔧 Converted asyncpg URL to psycopg driver")
 
 # Connection arguments for better compatibility (especially IPv6 on Windows)
 connect_args = {}
 if "postgresql" in database_url:
     connect_args = {
-        "ssl": "prefer",  # Supabase/Railway requires SSL
-        "server_settings": {
-            "application_name": "devmind_ai"
-        }
+        "sslmode": "prefer",  # psycopg3 uses sslmode instead of ssl
     }
-    logger.info(f"📦 Using PostgreSQL with asyncpg driver")
+    logger.info(f"📦 Using PostgreSQL with psycopg driver")
 
 try:
     engine = create_async_engine(

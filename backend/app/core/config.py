@@ -89,7 +89,7 @@ class Settings(BaseSettings):
     MAX_TOKENS: int = 2048
 
     # ── Database (Supabase PostgreSQL) ───────────────────────────────────────
-    DATABASE_URL: str = "postgresql+asyncpg://postgres:pass@db.xyz.supabase.co:5432/postgres"
+    DATABASE_URL: str = "postgresql+psycopg://postgres:pass@db.xyz.supabase.co:5432/postgres"
     SUPABASE_URL: str = ""
     SUPABASE_ANON_KEY: str = ""
     SUPABASE_PUBLISHABLE_KEY: str = ""

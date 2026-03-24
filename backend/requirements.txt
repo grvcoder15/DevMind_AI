@@ -20,7 +20,7 @@ numpy>=1.26.0  # Auto-select compatible version for your Python
 # Database
 sqlalchemy[asyncio]>=2.0.0
 aiosqlite>=0.20.0       # SQLite driver for dev
-asyncpg>=0.29.0         # PostgreSQL async driver (REQUIRED for Railway)
+psycopg[binary]>=3.0    # PostgreSQL async driver (psycopg3, REQUIRED for Railway)
 
 # Voice (optional — both degrade gracefully if missing)
 # openai-whisper  # Uncomment if needed (requires C++ build tools on Windows)
