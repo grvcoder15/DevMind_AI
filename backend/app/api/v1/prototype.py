@@ -27,11 +27,20 @@ async def gen_prototype(request: Request, body: PrototypeRequest, db: AsyncSessi
     if not snapshot or not analysis:
         raise HTTPException(404, "Upload and analyze the repository first.")
 
+    logger.info(f"🎨 Generating prototype for repo {body.repo_id}")
+    logger.info(f"Snapshot has {len(snapshot.files)} files")
+    logger.info(f"Framework: {analysis.get('framework')}, Entry points: {analysis.get('entry_points')}")
+    
     # Get file paths from snapshot (lightweight)
     file_paths = [f.path for f in snapshot.files]
     
+    # Log sample file paths for debugging
+    logger.info(f"Sample file paths: {file_paths[:10]}")
+    
     # Generate prototype (will read actual code from DB, not filesystem)
     proto_data = await generate_prototype(analysis, file_paths, body.repo_id, db)
+    
+    logger.info(f"✅ Prototype generated with {len(proto_data.get('screens', []))} screens")
 
     return {
         "repo_id":              body.repo_id,

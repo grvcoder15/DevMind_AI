@@ -649,24 +649,44 @@ async def generate_prototype(analysis: dict, file_paths: list, repo_id: str, db)
     component_code_samples = []
     db_files = await repo_service.get_files_from_db(repo_id, db)
     
+    logger.info(f"📊 Database has {len(db_files)} total files for repo {repo_id}")
+    
+    if not db_files:
+        logger.error(f"❌ No files found in database for repo {repo_id}! Database might not be populated.")
+    
     # Create lookup for fast access
     db_files_dict = {f['path']: f for f in db_files}
     
+    # Log first few DB paths for debugging
+    if db_files:
+        sample_db_paths = list(db_files_dict.keys())[:5]
+        logger.info(f"Sample DB file paths: {sample_db_paths}")
+    
+    # Log priority files we're looking for
+    logger.info(f"Looking for UI files: {priority_files[:5]}")
+    
     # Filter for UI files and get their content from DB (analyze up to 15 files)
+    matched_files = []
     for file_path in priority_files[:15]:  # Increased from 8 to 15
         if file_path in db_files_dict:
             db_file = db_files_dict[file_path]
             content = db_file['content'][:3500]  # Increased from 2000 to 3500 chars
             component_code_samples.append(f"File: {file_path}\n{content}")
+            matched_files.append(file_path)
+    
+    logger.info(f"✅ Matched {len(matched_files)} files from DB: {matched_files[:3]}")
     
     if not component_code_samples:
-        logger.warning("No component code could be read from DB, falling back to file list")
+        logger.warning(f"⚠️ No component code could be read from DB!")
+        logger.warning(f"Priority files wanted: {priority_files[:10]}")
+        logger.warning(f"DB has these paths: {list(db_files_dict.keys())[:10]}")
+        logger.warning("Falling back to file list only (less accurate)")
         file_listing = "\n".join(f"  {p}" for p in ui_files[:30])
         component_analysis = file_listing
     else:
         component_analysis = "\n\n---\n\n".join(component_code_samples)
     
-    logger.info(f"Analyzing {len(component_code_samples)} component files with actual code from DB")
+    logger.info(f"🔍 Analyzing {len(component_code_samples)} component files with actual code from DB")
 
     raw = await llm.complete(
         system=_PROTO_SYSTEM,
@@ -689,7 +709,12 @@ async def generate_prototype(analysis: dict, file_paths: list, repo_id: str, db)
         parsed = json.loads(cleaned)
         
         screens_count = len(parsed.get('screens', []))
-        logger.info(f"Prototype screens detected: {screens_count}")
+        logger.info(f"🎨 Prototype screens detected: {screens_count}")
+        
+        if screens_count == 0:
+            logger.warning(f"⚠️ LLM returned 0 screens!")
+            logger.warning(f"Input had {len(component_code_samples)} code samples, {len(ui_files)} UI files")
+            logger.warning(f"Framework: {analysis.get('framework')}, Entry points: {analysis.get('entry_points')}")
         
         # Log UI elements for debugging
         for screen in parsed.get('screens', []):
@@ -700,7 +725,18 @@ async def generate_prototype(analysis: dict, file_paths: list, repo_id: str, db)
         
         return parsed
     except json.JSONDecodeError as e:
-        logger.error(f"Prototype JSON parse failed: {e}")
-        logger.error(f"Raw response ({len(raw)} chars): {raw}")
+        logger.error(f"❌ Prototype JSON parse failed: {e}")
+        logger.error(f"Raw response ({len(raw)} chars): {raw[:500]}...")
         logger.error(f"This usually means max_tokens was too low or response was truncated")
-        return {"screens": [], "framework_detected": "React", "navigation_structure": ""}
+        
+        # Return informative error instead of empty
+        return {
+            "screens": [{
+                "name": "Error: Parsing Failed",
+                "description": "LLM response could not be parsed. Check logs for details.",
+                "ui_elements": {"buttons": [], "inputs": [], "headings": []},
+                "route": "/error"
+            }],
+            "framework_detected": "React",
+            "navigation_structure": "Error occurred during parsing"
+        }

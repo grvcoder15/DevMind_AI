@@ -22,5 +22,12 @@ async def generate_flow(request: Request, body: FlowRequest):
     if not analysis:
         raise HTTPException(404, "Analyze the repository first via /analyze.")
 
+    logger.info(f"🌊 Generating flow diagrams for repo {body.repo_id}")
+    logger.info(f"Framework: {analysis.get('framework')}")
+    
     flow_data = await generate_flows(analysis)
+    
+    flows_count = len(flow_data.get("flows", []))
+    logger.info(f"✅ Generated {flows_count} flow diagrams")
+    
     return {"repo_id": body.repo_id, "flows": flow_data.get("flows", [])}
