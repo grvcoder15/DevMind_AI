@@ -178,13 +178,59 @@ class RepoService:
                     logger.warning(f"Could not fully remove {path}: {e}. Proceeding anyway.")
 
     def _clone(self, url: str, dest: Path) -> None:
+        """
+        Clone a GitHub repository with support for private repos via token.
+        
+        For private repos, set GITHUB_TOKEN environment variable in Railway.
+        Automatically injects token into clone URL if available.
+        """
         self._safe_rmtree(dest)
         dest.mkdir(parents=True, exist_ok=True)
+        
         try:
             import git
-            git.Repo.clone_from(url, str(dest), depth=1)
+            
+            # Check if GitHub token is available (for private repos)
+            github_token = os.environ.get('GITHUB_TOKEN', '')
+            
+            # If token exists and URL is https GitHub, inject token
+            clone_url = url
+            if github_token and 'github.com' in url and url.startswith('https://'):
+                # Convert: https://github.com/user/repo.git 
+                # To: https://token@github.com/user/repo.git
+                clone_url = url.replace('https://github.com', f'https://{github_token}@github.com')
+                logger.info("🔐 Using GitHub token for private repo access")
+            
+            # Configure git environment to disable interactive prompts (for Railway)
+            env = os.environ.copy()
+            env['GIT_TERMINAL_PROMPT'] = '0'  # Disable interactive prompts
+            env['GIT_ASKPASS'] = 'echo'       # Return empty string for password prompts
+            env['GIT_SSH_COMMAND'] = 'ssh -o BatchMode=yes'  # Disable SSH prompts
+            
+            # Clone with configured environment
+            git.Repo.clone_from(
+                clone_url, 
+                str(dest), 
+                depth=1,
+                env=env
+            )
+            logger.info(f"✅ Successfully cloned repository to {dest}")
+            
         except ImportError:
             raise RuntimeError("GitPython not installed. Run: pip install gitpython")
+        except git.exc.GitCommandError as e:
+            # Better error messages for common issues
+            error_msg = str(e)
+            if "Authentication failed" in error_msg or "Invalid username or token" in error_msg:
+                raise RuntimeError(
+                    "Authentication failed for private repository. "
+                    "Please set GITHUB_TOKEN environment variable in Railway with a Personal Access Token. "
+                    "Create one at: https://github.com/settings/tokens/new with 'repo' scope."
+                )
+            elif "Repository not found" in error_msg or "404" in error_msg:
+                raise RuntimeError(f"Repository not found: {url}. Check if URL is correct and repo is accessible.")
+            else:
+                raise RuntimeError(f"Git clone failed: {error_msg}")
 
     def _walk(self, root: Path, snapshot: RepoSnapshot) -> None:
         for dirpath, dirnames, filenames in os.walk(root):
